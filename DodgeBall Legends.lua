@@ -1,3 +1,11 @@
+if running then return end
+getgenv().running = true
+
+local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/turner308/Roblox-Scripts/refs/heads/master/UwUware"))()
+local Window = UI:CreateWindow("Main")
+Window:AddToggle({text = "Auto Play", flag = "auto_play", state = false})
+UI:Init()
+
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -64,8 +72,8 @@ local function IsBallHeld()
     return GameObjects and GameObjects:FindFirstChild("Ball")
 end
 
-while enabled do
-    if tostring(LocalPlayer.Team) ~= "Lobby" then
+while true do
+    if UI.flags.auto_play and tostring(LocalPlayer.Team) ~= "Lobby" then
         local Character = PlayerAlive()
 
         if workspace:FindFirstChild("Ball") and Character then
