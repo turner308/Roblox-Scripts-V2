@@ -12,6 +12,7 @@ for _, v in next, getconnections(LocalPlayer.Idled) do v:Disable() end
 -- GUI
 local Window = UI:CreateWindow("Drift 36")
 Window:AddToggle({text = "Auto Solo Race", flag = "solo_race"})
+Window:AddButton({text = "By aturner @v3rm"})
 UI:Init()
 -- Main Loop
 while true do
