@@ -704,24 +704,6 @@ workspace.EasterEggs.ChildRemoved:Connect(function(Child)
         table.remove(EasterEggs, table.find(EasterEggs, Child))
     end
 end)
--- Get Item Total
-local LastTotal = nil
-local function GetItemTotal()
-    local Total = 0
-
-    for _, Folder in {LocalPlayer.Backpack, LocalPlayer.Character} do
-        for _, v in Folder:GetChildren() do
-            local ItemAmount = v:GetAttribute("ItemAmount")
-    
-            if ItemAmount then
-                Total += ItemAmount
-            end
-        end
-    end
-
-    return Total
-end
-LastTotal = GetItemTotal()
 --#endregion
 --#region Fight Entity
 local AttackTick = 1
