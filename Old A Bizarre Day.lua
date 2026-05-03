@@ -13,7 +13,7 @@ local Camera = workspace.CurrentCamera
 -- Remotes
 local PurchaseRE = ReplicatedStorage.Purchase
 -- Get Character
-local Character = nil -- i think this might be better than my PlayerAlive() function from previous scripts
+local Character = nil
 local ItemsAbleToBeReparented = {}
 
 task.spawn(function() -- spawned so :Wait does not yield
@@ -489,7 +489,7 @@ task.spawn(function()
             local WentToEnemy = false
 
             while UI.flags[Flag] do
-                local Entity = UI.flags.instant_kill and EnemyTable[1] or FightEntity(EnemyTable[1])
+                local Entity = FightEntity(EnemyTable[1])
 
                 if not Entity then break end
 
