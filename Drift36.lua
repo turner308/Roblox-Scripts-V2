@@ -49,13 +49,12 @@ task.spawn(function() -- spawned so :Wait does not yield
 end)
 -- GUI
 local Window = UI:CreateWindow("Drift 36")
-Window:AddToggle({text = "Auto Solo Race", flag = "solo_race", tooltip = "will go in best order, highway, city"})
+Window:AddToggle({text = "Auto Solo Race", flag = "solo_race"})
 local Status = Window:AddLabel({text = "waiting..."})
 Window:AddLabel({text = "by aturner"})
 UI:Init()
 -- Solo Race Function
--- local RaceNames = { "HighwayRace", "CityRace" } -- ordered from greatest money to least money
-local RaceNames = { "CityRace" }
+local RaceNames = { "CityRace" } -- in table for future proofing
 
 local function GetClientRaceData(DataName)
     for _, RaceName in RaceNames do
