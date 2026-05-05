@@ -6,51 +6,164 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 --
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer.PlayerGui
-local RaceEventRE = ReplicatedStorage.Remotes.Race.RaceEvent
+-- Lap UI
+local RaceGui = PlayerGui.General.Modules.RaceGui
+local LapUI = RaceGui:WaitForChild("lap")
+-- Remotes
+local Remotes = ReplicatedStorage.Remotes
+local RaceEventRE = Remotes.Race.RaceEvent
+local SpawnCarRE = Remotes.Car.SpawnCar
 -- Anti AFK
-for _, v in next, getconnections(LocalPlayer.Idled) do v:Disable() end
--- GUI
-local Window = UI:CreateWindow("Drift 36")
-Window:AddToggle({text = "Auto Solo Race", flag = "solo_race"})
-Window:AddButton({text = "By aturner @v3rm"})
-UI:Init()
--- Main Loop
-while true do
-    if UI.flags.solo_race then
-        local PlayerCar = workspace.Araclar:FindFirstChild(LocalPlayer.Name .. "_spcar")
+for _, v in next, getconnections(LocalPlayer.Idled) do
+    v:Disable()
+end
+-- Get Character
+local Character = nil
 
-        if PlayerCar then
-            local ClientObjects = workspace:FindFirstChild("SoloRace_ClientObjects")
+task.spawn(function() -- spawned so :Wait does not yield
+    local function OnCharacterAdded(Char: Players)
+        Char = Char or LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 
-            if not ClientObjects then
-                RaceEventRE:FireServer({
-                    action = "EnterRaceZone",
-                    raceId = "SoloRace"
-                })
-            else
-                local TrackObjects = workspace:FindFirstChild("SoloRace_TrackObjects")
+        local Humanoid: Humanoid = Char:FindFirstChild("Humanoid") or Char:WaitForChild("Humanoid", 3)
 
-                if TrackObjects then
-                    local Checkpoints = workspace:FindFirstChild("SoloRace_ServerCheckpoints")
+        if not Humanoid then return end
 
-                    if Checkpoints then
-                        local CurrentPoint = PlayerGui.General.Modules.RaceGui.checkpoint.InfoText.Text:split("/")
-                        local CurLap, LapMax = tonumber(CurrentPoint[1]), tonumber(CurrentPoint[2])
-
-                        if CurLap == LapMax then
-                            PlayerCar:PivotTo(Checkpoints.ServerFinishLine.CFrame)
-                        else
-                            local LapFound = Checkpoints:FindFirstChild(CurLap + 1)
-
-                            if LapFound then
-                                PlayerCar:PivotTo(LapFound.CFrame)
-                            end
-                        end
-                    end
-                end
+        local HealthSignal = nil
+        HealthSignal = Humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+            if Humanoid.Health <= 0 then
+                Character = nil
+                HealthSignal:Disconnect()
             end
-        end
+        end)
+
+        local HumanoidRootPart = Char:FindFirstChild("HumanoidRootPart") or Char:WaitForChild("HumanoidRootPart", 3)
+
+        if not HumanoidRootPart then return end
+
+        Character = Char
     end
 
-    task.wait(1)
+    OnCharacterAdded()
+
+    LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
+end)
+-- GUI
+local Window = UI:CreateWindow("Drift 36")
+Window:AddToggle({text = "Auto Solo Race", flag = "solo_race", tooltip = "will go in best order, highway, city"})
+local Status = Window:AddLabel({text = "waiting..."})
+Window:AddLabel({text = "by aturner"})
+UI:Init()
+-- Solo Race Function
+-- local RaceNames = { "HighwayRace", "CityRace" } -- ordered from greatest money to least money
+local RaceNames = { "CityRace" }
+
+local function GetClientRaceData(DataName)
+    for _, RaceName in RaceNames do
+        local Found = workspace:FindFirstChild(RaceName .. DataName)
+
+        print(RaceName .. DataName)
+
+        if Found then
+            return Found
+        end
+    end
+end
+
+local function SoloRace()
+    if not Character then return end
+
+    local PlayerCar = workspace.Araclar:FindFirstChild(LocalPlayer.Name .. "_spcar")
+
+    if not PlayerCar then
+        local OwnedCars = LocalPlayer:FindFirstChild("Cars")
+
+        if not OwnedCars then 
+            return "cars folder"
+        end
+
+        local AnyCar = OwnedCars:FindFirstChildWhichIsA("Model")
+
+        if not AnyCar then 
+            return "no owned cars"
+        end
+
+        SpawnCarRE:FireServer(
+            AnyCar.Name,
+            Character:GetPivot().Position
+        )
+
+        task.wait(1)
+
+        return "spawning car"
+    end
+
+    local DriveSeat = PlayerCar:FindFirstChild("DriveSeat")
+
+    if not DriveSeat then
+        PlayerCar:Destroy() -- fix voided car
+        return "waiting for seat"
+    end
+
+    if Character.Humanoid.SeatPart ~= DriveSeat then
+        DriveSeat:Sit(Character.Humanoid)
+        return "sitting"
+    end
+
+    local ClientObjects = GetClientRaceData("_ClientObjects")
+
+    if not ClientObjects and not RaceGui.Visible then
+        for _, RaceName in RaceNames do
+            RaceEventRE:FireServer({
+                solo = true,
+                action = "EnterRaceZone",
+                raceId = RaceName
+            })
+        end
+        return "starting race"
+    end
+
+    local TrackObjects = GetClientRaceData("_TrackObjects")
+
+    if not TrackObjects then
+        return "getting track objects"
+    end
+
+    local Checkpoints = GetClientRaceData("_solo_ServerCheckpoints")
+
+    if not Checkpoints then
+        return "getting checkpoints"
+    end
+
+    local CurLap = tonumber(LapUI.LeftSideLabel.Text)
+    local LapMax = tonumber(LapUI.RightSideLabel.Text:split("/")[2])
+
+    if CurLap == LapMax then
+        for _, v in PlayerCar:GetDescendants() do -- prevent car from glitching out
+            if v:IsA("BasePart") then
+                v.AssemblyLinearVelocity = Vector3.zero
+				v.AssemblyAngularVelocity = Vector3.zero
+            end    
+        end
+
+        PlayerCar:PivotTo(Checkpoints.ServerFinishLine.CFrame)
+        return "finish race"
+    end
+
+    local LapFound = Checkpoints:FindFirstChild(CurLap + 1)
+
+    if not LapFound then
+        return "next point"
+    end
+    
+    PlayerCar:PivotTo(LapFound.CFrame)
+
+    task.wait(0.5) -- needs delay or it detects you
+end
+-- Main Loop
+while UI.alive do
+    if UI.flags.solo_race then
+        Status.Text = SoloRace() or "waiting..."
+    end
+
+    task.wait()
 end
