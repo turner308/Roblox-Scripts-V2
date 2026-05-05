@@ -61,8 +61,6 @@ local function GetClientRaceData(DataName)
     for _, RaceName in RaceNames do
         local Found = workspace:FindFirstChild(RaceName .. DataName)
 
-        print(RaceName .. DataName)
-
         if Found then
             return Found
         end
