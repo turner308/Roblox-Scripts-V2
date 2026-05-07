@@ -47,6 +47,17 @@ task.spawn(function() -- spawned so :Wait does not yield
 
     LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
 end)
+-- Teleport Function
+local function TeleportCar(PlayerCar, Destination)
+    for _, v in PlayerCar:GetDescendants() do -- prevent car from glitching out
+        if v:IsA("BasePart") then
+            v.AssemblyLinearVelocity = Vector3.zero
+            v.AssemblyAngularVelocity = Vector3.zero
+        end    
+    end
+
+    PlayerCar:PivotTo(Destination)
+end
 -- GUI
 local Window = UI:CreateWindow("Drift 36")
 Window:AddToggle({text = "Auto Solo Race", flag = "solo_race"})
@@ -135,14 +146,7 @@ local function SoloRace()
     local LapMax = tonumber(LapUI.RightSideLabel.Text:split("/")[2])
 
     if CurLap == LapMax then
-        for _, v in PlayerCar:GetDescendants() do -- prevent car from glitching out
-            if v:IsA("BasePart") then
-                v.AssemblyLinearVelocity = Vector3.zero
-				v.AssemblyAngularVelocity = Vector3.zero
-            end    
-        end
-
-        PlayerCar:PivotTo(Checkpoints.ServerFinishLine.CFrame)
+        TeleportCar(PlayerCar, Checkpoints.ServerFinishLine.CFrame)
         return "finish race"
     end
 
@@ -152,7 +156,7 @@ local function SoloRace()
         return "next point"
     end
     
-    PlayerCar:PivotTo(LapFound.CFrame)
+    TeleportCar(PlayerCar, LapFound.CFrame)
 
     task.wait(0.5) -- needs delay or it detects you
 end
