@@ -6,13 +6,25 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 --
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer.PlayerGui
--- Lap UI
-local RaceGui = PlayerGui.General.Modules.RaceGui
-local LapUI = RaceGui:WaitForChild("lap")
--- Remotes
-local Remotes = ReplicatedStorage.Remotes
-local RaceEventRE = Remotes.Race.RaceEvent
-local SpawnCarRE = Remotes.Car.SpawnCar
+-- Get remote stuff
+local RaceGui = nil
+local LapUI = nil
+local RaceEventRE = nil
+local SpawnCarRE = nil
+
+task.spawn(function()
+    -- Lap UI
+    RaceGui = PlayerGui:WaitForChild("General")
+        :WaitForChild("Modules")
+        :WaitForChild("RaceGui")
+    LapUI = RaceGui:WaitForChild("lap")
+    -- Remotes
+    local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+    RaceEventRE = Remotes:WaitForChild("Race")
+        :WaitForChild("RaceEvent")
+    SpawnCarRE = Remotes:WaitForChild("Car")
+        :WaitForChild("SpawnCar")
+end)
 -- Anti AFK
 for _, v in next, getconnections(LocalPlayer.Idled) do
     v:Disable()
@@ -78,7 +90,9 @@ local function GetClientRaceData(DataName)
 end
 
 local function SoloRace()
-    if not Character then return end
+    if not RaceGui or not LapUI or not RaceEventRE or not SpawnCarRE then return "loading..." end
+
+    if not Character then return "character" end
 
     local PlayerCar = workspace.Araclar:FindFirstChild(LocalPlayer.Name .. "_spcar")
 
