@@ -31,20 +31,26 @@ for _, v in next, getconnections(LocalPlayer.Idled) do
 end
 -- Get Character
 local Character = nil
+local HealthSignal = nil
 
 task.spawn(function() -- spawned so :Wait does not yield
     local function OnCharacterAdded(Char: Players)
+        if HealthSignal then
+            HealthSignal:Disconnect()
+            HealthSignal = nil
+        end
+
         Char = Char or LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 
         local Humanoid: Humanoid = Char:FindFirstChild("Humanoid") or Char:WaitForChild("Humanoid", 3)
 
         if not Humanoid then return end
 
-        local HealthSignal = nil
         HealthSignal = Humanoid:GetPropertyChangedSignal("Health"):Connect(function()
             if Humanoid.Health <= 0 then
                 Character = nil
                 HealthSignal:Disconnect()
+                HealthSignal = nil
             end
         end)
 
