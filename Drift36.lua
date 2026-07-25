@@ -100,7 +100,14 @@ local function SoloRace()
 
     if not Character then return "character" end
 
-    local PlayerCar = workspace.Araclar:FindFirstChild(LocalPlayer.Name .. "_spcar")
+    local PlayerCar = nil
+
+    for _, v in workspace.Araclar:GetChildren() do
+        if v.Name:find(LocalPlayer.Name) then
+            PlayerCar = v
+            break
+        end
+    end
 
     if not PlayerCar then
         local OwnedCars = LocalPlayer:FindFirstChild("Cars")
